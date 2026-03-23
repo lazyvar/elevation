@@ -43,7 +43,7 @@ The building cross-section visualization. Resizes with the browser window.
 
 - If the building exceeds viewport height, the canvas scrolls vertically via mouse wheel / trackpad. The canvas element itself handles scroll, not the page.
 - Ground floor at the bottom, top floor at the top
-- Sprites render at 2x–3x native pixel size for visibility
+- Sprites render at 2x native pixel size (4x on displays with devicePixelRatio >= 2)
 - `imageSmoothingEnabled = false` for crisp pixel art
 
 ## Simulation Engine
@@ -106,7 +106,7 @@ Elevators won't board more animals than their max capacity. Waiting animals see 
 ### Play/Pause/Step
 
 - Pause freezes sim clock; rendering continues (static frame)
-- Step advances exactly one sim tick while paused
+- Step advances one sim tick while paused, using a fixed dt of 16.67ms (1/60s) at 1x speed
 
 ## Scheduling Algorithms
 
@@ -156,7 +156,7 @@ The manifest normalizes differences between the three packs.
 ### Rendering
 
 - `imageSmoothingEnabled = false` for pixel-perfect rendering
-- Sprites at 2x–3x native size
+- Sprites at 2x native size (4x on high-DPI)
 - Frame animation timing tied to sim clock
 - Random animal type selected on spawn
 
