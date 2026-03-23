@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elevation — Elevator Simulator</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="controls">
+    <div class="control-group control-group--left">
+      <button id="btn-play" title="Play/Pause">&#9654;</button>
+      <button id="btn-step" title="Step">&#9197;</button>
+      <label>Speed <input type="range" id="speed" min="0.5" max="5" step="0.5" value="1"><span id="speed-val">1x</span></label>
+      <button id="btn-reset" title="Reset">Reset</button>
+    </div>
+    <div class="control-group control-group--center">
+      <label>Floors <input type="number" id="floors" min="2" max="50" value="5"></label>
+      <label>Elevators <input type="number" id="elevators" min="1" max="8" value="2"></label>
+      <label>Capacity <input type="number" id="capacity" min="1" max="20" value="6"></label>
+    </div>
+    <div class="control-group control-group--right">
+      <label>Spawn Rate <input type="range" id="spawn-rate" min="0" max="100" value="50"></label>
+      <label>Algorithm
+        <select id="algorithm">
+          <option value="scan" selected>SCAN</option>
+          <option value="nearest">Nearest Car</option>
+          <option value="roundrobin">Round Robin</option>
+        </select>
+      </label>
+      <button id="btn-spawn">Spawn Animal</button>
+    </div>
+  </header>
+  <canvas id="sim-canvas"></canvas>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
