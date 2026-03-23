@@ -10,6 +10,30 @@ const ANIMAL_TYPES = [
 const MAX_WAITING = 30;
 const MAX_PER_FLOOR = 3;
 
+// Animal name pools by species
+const CAT_NAMES = [
+  'Mochi','Luna','Miso','Cleo','Nori','Biscuit','Pepper','Salem','Ginger','Olive',
+  'Tofu','Sushi','Maple','Willow','Hazel','Pumpkin','Whiskers','Muffin','Cinnamon','Basil',
+  'Chai','Sage','Clover','Nutmeg','Waffles','Pickles','Nugget','Toffee','Cocoa','Latte',
+];
+const DOG_NAMES = [
+  'Barkley','Scout','Bear','Cooper','Duke','Rosie','Banjo','Ziggy','Moose','Maple',
+  'Bruno','Frankie','Waldo','Poppy','Otis','Rufus','Gus','Benny','Oakley','Chester',
+  'Tucker','Hank','Murphy','Jasper','Marley','Louie','Winston','Baxter','Dexter','Monty',
+];
+const FOX_NAMES = [
+  'Ember','Blaze','Rusty','Fern','Juniper','Ash','Clover','Bramble','Maple','Cedar',
+  'Sorrel','Hawthorn','Briar','Thistle','Birch','Rowan','Flint','Reed','Moss','Sage',
+  'Ivy','Heather','Glen','Wren','Alder','Lark','Pike','Dusk','Storm','Frost',
+];
+
+function pickName(type) {
+  const pool = type.startsWith('cat') ? CAT_NAMES
+    : type.startsWith('dog') ? DOG_NAMES
+    : FOX_NAMES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 // Simulation constants
 export const SIM_CONSTANTS = {
   elevatorSpeed: 1.5,     // floors per second
@@ -69,9 +93,11 @@ export function spawnAnimal(sim, forceOrigin) {
   let dest = Math.floor(Math.random() * sim.floors);
   while (dest === origin) dest = Math.floor(Math.random() * sim.floors);
 
+  const type = ANIMAL_TYPES[Math.floor(Math.random() * ANIMAL_TYPES.length)];
   const animal = {
     id: sim.nextAnimalId++,
-    type: ANIMAL_TYPES[Math.floor(Math.random() * ANIMAL_TYPES.length)],
+    type,
+    name: pickName(type),
     origin,
     dest,
     direction: dest > origin ? 1 : -1,

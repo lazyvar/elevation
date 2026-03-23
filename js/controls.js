@@ -1,5 +1,15 @@
 // js/controls.js — Wire control strip inputs to simulation state
 
+const SCENARIOS = {
+  chaos:      { floors: 12, elevators: 10, capacity: 1,  algorithm: 'scan',       spawnRate: 50 },
+  'lone-lift':{ floors: 12, elevators: 1,  capacity: 1,  algorithm: 'scan',       spawnRate: 30 },
+  express:    { floors: 8,  elevators: 3,  capacity: 8,  algorithm: 'nearest',    spawnRate: 70 },
+  skyscraper: { floors: 40, elevators: 6,  capacity: 10, algorithm: 'scan',       spawnRate: 60 },
+  'rush-hour':{ floors: 10, elevators: 4,  capacity: 4,  algorithm: 'roundrobin', spawnRate: 100 },
+  penthouse:  { floors: 20, elevators: 2,  capacity: 3,  algorithm: 'nearest',    spawnRate: 40 },
+  sardines:   { floors: 5,  elevators: 2,  capacity: 20, algorithm: 'roundrobin', spawnRate: 80 },
+};
+
 export function setupControls(callbacks) {
   const els = {
     btnPlay: document.getElementById('btn-play'),
@@ -15,6 +25,7 @@ export function setupControls(callbacks) {
     spawnRate: document.getElementById('spawn-rate'),
     spawnRateVal: document.getElementById('spawn-rate-val'),
     algorithm: document.getElementById('algorithm'),
+    scenario: document.getElementById('scenario'),
   };
 
   let paused = true;
@@ -68,6 +79,27 @@ export function setupControls(callbacks) {
   els.btnClear.addEventListener('click', () => {
     callbacks.onClearAnimals();
   });
+
+  els.scenario.addEventListener('change', () => {
+    const preset = SCENARIOS[els.scenario.value];
+    if (!preset) return; // custom — do nothing
+    applyPreset(preset);
+    paused = true;
+    els.btnPlay.textContent = '\u25B6';
+    callbacks.onReset(getConfig());
+  });
+
+  function applyPreset(preset) {
+    els.floors.value = preset.floors;
+    els.elevators.value = preset.elevators;
+    els.capacity.value = preset.capacity;
+    els.algorithm.value = preset.algorithm;
+    els.spawnRate.value = preset.spawnRate;
+    els.spawnRateVal.textContent = preset.spawnRate;
+    callbacks.onAlgorithmChange(preset.algorithm);
+    const threshold = preset.spawnRate === 0 ? Infinity : 0.9 - (preset.spawnRate / 100) * 0.6;
+    callbacks.onSpawnRateChange(threshold);
+  }
 
   function getConfig() {
     return {

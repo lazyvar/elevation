@@ -44,7 +44,7 @@ export function logEvent(type, id, desc) {
  * Log an animal event, deriving actor type from animal.type.
  */
 export function logAnimalEvent(animal, desc) {
-  logEvent(actorType(animal.type), animal.id, desc);
+  logEvent(actorType(animal.type), animal.name || animal.id, desc);
 }
 
 export function clearLog() {

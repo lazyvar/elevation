@@ -183,38 +183,66 @@ function drawElevators(ctx, sim, layout) {
       ctx.fillRect(carX, carY, CAR_WIDTH, CAR_HEIGHT);
     }
 
-    // Passenger indicators — colored badges above elevator
+    // Passenger indicators — colored name badges above elevator
     if (el.passengers.length > 0) {
-      const badgeW = 18;
-      const badgeH = 16;
+      ctx.font = 'bold 9px Sora, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Measure badge widths based on name text
       const gap = 3;
-      const totalW = el.passengers.length * (badgeW + gap) - gap;
-      const startX = carX + (CAR_WIDTH - totalW) / 2;
-
-      for (let p = 0; p < el.passengers.length; p++) {
-        const passenger = el.passengers[p];
-        const bx = startX + p * (badgeW + gap);
-        const by = carY - badgeH - 6;
-
-        // Color by animal type
+      const badgeH = 16;
+      const padX = 6;
+      const badges = el.passengers.map(passenger => {
+        const label = `${passenger.name}→${passenger.dest + 1}`;
+        const textW = ctx.measureText(label).width;
+        const badgeW = Math.ceil(textW + padX * 2);
         let color = '#888';
         if (passenger.type.startsWith('cat')) color = '#f59e0b';
         else if (passenger.type.startsWith('dog')) color = '#60a5fa';
         else if (passenger.type.startsWith('fox')) color = '#f87171';
+        return { label, badgeW, color };
+      });
+      const totalW = badges.reduce((sum, b) => sum + b.badgeW + gap, -gap);
+      const startX = carX + (CAR_WIDTH - totalW) / 2;
 
-        // Badge background
-        ctx.fillStyle = color;
+      let bx = startX;
+      for (const badge of badges) {
+        const by = carY - badgeH - 6;
+
+        ctx.fillStyle = badge.color;
         ctx.beginPath();
-        ctx.roundRect(bx, by, badgeW, badgeH, 3);
+        ctx.roundRect(bx, by, badge.badgeW, badgeH, 3);
         ctx.fill();
 
-        // Destination floor number
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px Sora, monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${passenger.dest + 1}`, bx + badgeW / 2, by + badgeH / 2);
+        ctx.fillText(badge.label, bx + badge.badgeW / 2, by + badgeH / 2);
+        bx += badge.badgeW + gap;
       }
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // Target floor indicator below elevator
+    if (el.targetFloor !== null && el.state === 'moving') {
+      const indicatorY = carY + CAR_HEIGHT + 4;
+      const indicatorW = 22;
+      const indicatorH = 16;
+      const indicatorX = carX + (CAR_WIDTH - indicatorW) / 2;
+
+      // Arrow + floor number
+      const arrow = el.direction > 0 ? '\u25B2' : '\u25BC';
+      const arrowColor = el.direction > 0 ? '#16a34a' : '#dc2626';
+
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.beginPath();
+      ctx.roundRect(indicatorX, indicatorY, indicatorW, indicatorH, 3);
+      ctx.fill();
+
+      ctx.fillStyle = arrowColor;
+      ctx.font = 'bold 10px Sora, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${arrow}${el.targetFloor + 1}`, indicatorX + indicatorW / 2, indicatorY + indicatorH / 2);
       ctx.textBaseline = 'alphabetic';
     }
   }
@@ -250,11 +278,15 @@ function drawAnimals(ctx, sim, layout) {
         ax, ay, frame.fw * SPRITE_SCALE, frame.fh * SPRITE_SCALE
       );
 
-      // Direction arrow
+      // Name + direction arrow
+      const arrow = animal.direction > 0 ? '\u25B2' : '\u25BC';
+      ctx.font = '8px Sora, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#555';
+      ctx.fillText(animal.name, ax + frame.fw * SPRITE_SCALE / 2, ay - 10);
       ctx.fillStyle = animal.direction > 0 ? '#16a34a' : '#dc2626';
       ctx.font = '10px Sora, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(animal.direction > 0 ? '\u25B2' : '\u25BC', ax + frame.fw * SPRITE_SCALE / 2, ay - 2);
+      ctx.fillText(arrow, ax + frame.fw * SPRITE_SCALE / 2, ay - 2);
     });
   }
 }
