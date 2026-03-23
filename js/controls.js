@@ -8,6 +8,9 @@ const SCENARIOS = {
   'rush-hour':{ floors: 10, elevators: 4,  capacity: 4,  algorithm: 'roundrobin', spawnRate: 100 },
   penthouse:  { floors: 20, elevators: 2,  capacity: 3,  algorithm: 'nearest',    spawnRate: 40 },
   sardines:   { floors: 5,  elevators: 2,  capacity: 20, algorithm: 'roundrobin', spawnRate: 80 },
+  'scan-sweep':       { floors: 30, elevators: 3, capacity: 6,  algorithm: 'scan',       spawnRate: 65 },
+  'nearest-cluster':  { floors: 8,  elevators: 5, capacity: 4,  algorithm: 'nearest',    spawnRate: 90 },
+  'rr-balance':       { floors: 10, elevators: 6, capacity: 4,  algorithm: 'roundrobin', spawnRate: 70 },
 };
 
 export function setupControls(callbacks) {
