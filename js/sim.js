@@ -176,6 +176,17 @@ function tickElevator(sim, el, dt) {
       break;
 
     case 'moving': {
+      // Re-evaluate targetFloor: algorithm may have inserted a closer
+      // intermediate target since we started moving.
+      if (el.targets.length > 0) {
+        const ahead = el.direction > 0
+          ? el.targets.filter(t => t > el.floor).sort((a, b) => a - b)
+          : el.targets.filter(t => t < el.floor).sort((a, b) => b - a);
+        if (ahead.length > 0) {
+          el.targetFloor = ahead[0];
+        }
+      }
+
       el.floor += el.direction * SIM_CONSTANTS.elevatorSpeed * dt;
       if (el.targetFloor !== null) {
         const reached = el.direction > 0
@@ -184,8 +195,33 @@ function tickElevator(sim, el, dt) {
         if (reached) {
           el.floor = el.targetFloor;
           el.targets = el.targets.filter(t => t !== el.targetFloor);
-          el.state = 'doors-opening';
-          el.stateTimer = SIM_CONSTANTS.doorDuration;
+          // Only open doors if there's actual work on this floor
+          const hasDropoff = el.passengers.some(a => a.dest === el.targetFloor);
+          const hasPickup = el.passengers.length < sim.capacity &&
+            sim.animals.some(a =>
+              a.state === 'waiting' &&
+              a.origin === el.targetFloor &&
+              (el.direction === 0 || a.direction === el.direction)
+            );
+          if (hasDropoff || hasPickup) {
+            el.state = 'doors-opening';
+            el.stateTimer = SIM_CONSTANTS.doorDuration;
+          } else if (el.targets.length > 0) {
+            // Skip this floor, keep moving to next target
+            const dir = el.direction || 1;
+            const ahead = el.targets.filter(t => dir > 0 ? t > el.floor : t < el.floor);
+            if (ahead.length > 0) {
+              ahead.sort((a, b) => dir > 0 ? a - b : b - a);
+              el.targetFloor = ahead[0];
+            } else {
+              const behind = el.targets.slice().sort((a, b) => dir > 0 ? b - a : a - b);
+              el.targetFloor = behind[0];
+              el.direction = el.targetFloor > el.floor ? 1 : -1;
+            }
+          } else {
+            el.direction = 0;
+            el.state = 'idle';
+          }
         }
       }
       break;
@@ -213,12 +249,12 @@ function tickElevator(sim, el, dt) {
         break;
       }
 
-      // Board waiting animals — direction-aware (but accept any direction when empty)
+      // Board waiting animals — strict direction match (idle elevator accepts any)
       const waiting = sim.animals.filter(a =>
         a.state === 'waiting' &&
         a.origin === currentFloor &&
         el.passengers.length < sim.capacity &&
-        (el.direction === 0 || el.passengers.length === 0 || a.direction === el.direction)
+        (el.direction === 0 || a.direction === el.direction)
       );
       if (waiting.length > 0 && el.stateTimer <= 0) {
         const animal = waiting[0];
@@ -254,7 +290,7 @@ function tickElevator(sim, el, dt) {
         a.state === 'waiting' &&
         a.origin === closingFloor &&
         el.passengers.length < sim.capacity &&
-        (el.direction === 0 || el.passengers.length === 0 || a.direction === el.direction)
+        (el.direction === 0 || a.direction === el.direction)
       );
       const needsUnload = el.passengers.some(a => a.dest === closingFloor);
       if (newWaiting || needsUnload) {
@@ -267,8 +303,21 @@ function tickElevator(sim, el, dt) {
 
       if (el.stateTimer <= 0) {
         if (el.targets.length > 0) {
-          el.targetFloor = el.targets[0];
-          el.direction = el.targetFloor > el.floor ? 1 : -1;
+          // Continue in current direction if targets remain ahead (SCAN behavior)
+          const dir = el.direction || 1;
+          const ahead = el.targets.filter(t => dir > 0 ? t > el.floor : t < el.floor);
+          if (ahead.length > 0) {
+            ahead.sort((a, b) => dir > 0 ? a - b : b - a);
+            el.targetFloor = ahead[0];
+            el.direction = dir;
+          } else {
+            // No targets ahead — reverse direction
+            const behind = el.targets.slice().sort((a, b) =>
+              dir > 0 ? b - a : a - b
+            );
+            el.targetFloor = behind[0];
+            el.direction = el.targetFloor > el.floor ? 1 : -1;
+          }
           el.state = 'moving';
         } else {
           el.direction = 0;
