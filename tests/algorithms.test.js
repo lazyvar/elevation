@@ -2,6 +2,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { scanAlgorithm } from '../js/algorithms/scan.js';
+import { nearestCarAlgorithm } from '../js/algorithms/nearest.js';
 
 function makeSim(overrides = {}) {
   return {
@@ -41,5 +42,20 @@ describe('SCAN algorithm', () => {
     );
     scanAlgorithm(sim);
     assert.strictEqual(sim.elevators[0].targets[0], 5);
+  });
+});
+
+describe('Nearest Car algorithm', () => {
+  it('assigns animal to closest elevator', () => {
+    const sim = makeSim({
+      elevators: [
+        { id: 0, floor: 1, direction: 0, passengers: [], state: 'idle', targets: [], targetFloor: null, stateTimer: 0 },
+        { id: 1, floor: 8, direction: 0, passengers: [], state: 'idle', targets: [], targetFloor: null, stateTimer: 0 },
+      ],
+    });
+    sim.animals.push({ id: 0, origin: 2, dest: 5, state: 'waiting', direction: 1 });
+    nearestCarAlgorithm(sim);
+    assert.ok(sim.elevators[0].targets.includes(2), 'Elevator 0 (floor 1) should get the request');
+    assert.ok(!sim.elevators[1].targets.includes(2), 'Elevator 1 (floor 8) should not');
   });
 });

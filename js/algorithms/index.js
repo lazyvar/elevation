@@ -1,8 +1,8 @@
-// js/algorithms/index.js — Algorithm registry
 import { scanAlgorithm } from './scan.js';
+import { nearestCarAlgorithm } from './nearest.js';
 
 export const algorithms = {
   scan: scanAlgorithm,
-  nearest: scanAlgorithm,     // placeholder — replaced in Task 7
+  nearest: nearestCarAlgorithm,
   roundrobin: scanAlgorithm,  // placeholder — replaced in Task 8
 };
