@@ -10,6 +10,7 @@ A browser-based elevator simulator hosted as a static single page on GitHub Page
 - **Language:** Vanilla JavaScript, ES modules (`type="module"`), no framework
 - **Build:** None — no bundler, no transpiler. Served directly by GitHub Pages
 - **Dependencies:** Zero
+- **Browser target:** Modern evergreen browsers (Chrome, Firefox, Safari, Edge). No IE11 or legacy fallback.
 
 ## Page Layout
 
@@ -21,7 +22,7 @@ Horizontal bar across the top of the page. Controls are secondary to the visual 
 
 - **Left group:** Play/Pause button, Step button, Speed slider (0.5x–5x), Reset button
 - **Center group:** Floors (number input, 2–50), Elevators (number input, 1–8), Max capacity per elevator (number input, 1–20)
-- **Right group:** Spawn rate slider (Perlin noise intensity), Algorithm dropdown (SCAN, Nearest Car, Round Robin), "Spawn Animal" button for manual placement
+- **Right group:** Spawn rate slider (Perlin noise threshold, labeled "Spawn Rate"), Algorithm dropdown (SCAN, Nearest Car, Round Robin), "Spawn Animal" button (spawns one animal at a random floor with a random destination — same as auto-spawner, just manual trigger)
 
 Changes to floors, elevators, or capacity trigger a simulation reset. Speed and spawn rate are adjustable live.
 
@@ -40,7 +41,7 @@ The building cross-section visualization. Resizes with the browser window.
 
 ### Scrolling & Scaling
 
-- If the building exceeds viewport height, the canvas scrolls vertically
+- If the building exceeds viewport height, the canvas scrolls vertically via mouse wheel / trackpad. The canvas element itself handles scroll, not the page.
 - Ground floor at the bottom, top floor at the top
 - Sprites render at 2x–3x native pixel size for visibility
 - `imageSmoothingEnabled = false` for crisp pixel art
@@ -53,10 +54,29 @@ Tick-based simulation on `requestAnimationFrame`, decoupled from rendering:
 
 - Sim clock advances by `dt * speedMultiplier` each frame
 - All logic runs against sim time, not wall time
+- One sim tick = one `requestAnimationFrame` callback (~16ms wall time at 60fps). The `dt` passed to the update loop is the real frame delta in seconds, scaled by `speedMultiplier`. No fixed timestep — the sim is purely visual, determinism is not required.
+
+### Simulation Constants (defaults)
+
+- **Elevator speed:** 1.5 floors/sec (sim time)
+- **Door open/close duration:** 0.4s each
+- **Boarding time per animal:** 0.3s (animals board one at a time)
+- **Unloading time per animal:** 0.3s
+
+### Default Initial State
+
+- **Floors:** 5
+- **Elevators:** 2
+- **Capacity:** 6
+- **Algorithm:** SCAN
+- **Speed:** 1x
+- **State:** Paused — user hits Play to start
 
 ### Perlin Noise Spawner
 
-A 1D Perlin noise function sampled over sim time controls spawn probability each tick. When the noise value exceeds a threshold (inversely related to the spawn rate slider), a new animal spawns at a random floor wanting a random destination floor. This creates organic waves of activity — busy periods and lulls — instead of uniform random arrivals.
+A 1D Perlin noise function (classic Perlin, inlined — no dependency) sampled over sim time controls spawn probability each tick. The noise output is in range [0, 1]. The spawn rate slider maps linearly to a threshold: slider min (left) = threshold 0.9 (rare spawns), slider max (right) = threshold 0.3 (frequent spawns). When the noise sample exceeds the threshold, one animal spawns at a random floor with a random different destination floor (same-floor destinations are rerolled). This creates organic waves of activity — busy periods and lulls — instead of uniform random arrivals.
+
+Maximum 30 animals waiting across all floors. Beyond this, spawning pauses until animals are delivered.
 
 ### Animal Lifecycle
 
@@ -90,7 +110,7 @@ Elevators won't board more animals than their max capacity. Waiting animals see 
 
 ## Scheduling Algorithms
 
-Three algorithms, selectable via dropdown. Switching mid-run reassigns all elevator targets immediately. All share a common interface: given current state (elevator positions, directions, passenger lists, waiting animals), produce target floors for each elevator.
+Three algorithms, selectable via dropdown. Switching mid-run recalculates future target assignments; in-transit passengers are unaffected (they still exit at their destination). Only the decision of which elevator goes where next changes. All algorithms share a common interface: given current state (elevator positions, directions, passenger lists, waiting animals), produce target floors for each elevator.
 
 ### SCAN (Elevator Algorithm)
 
