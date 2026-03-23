@@ -981,7 +981,7 @@ function tickElevator(sim, el, dt) {
 node --test tests/sim.test.js
 ```
 
-Expected: All 3 tests PASS.
+Expected: All 9 tests PASS (1 createSim + 2 spawnAnimal + 6 tickSim).
 
 - [ ] **Step 5: Commit**
 
