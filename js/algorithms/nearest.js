@@ -21,7 +21,8 @@ export function nearestCarAlgorithm(sim) {
       const headingToward = el.direction === 0 ||
         (el.direction > 0 && animal.origin >= el.floor) ||
         (el.direction < 0 && animal.origin <= el.floor);
-      const score = headingToward ? dist : dist + sim.floors;
+      const loadPenalty = (el.targets.length + el.passengers.length) * 2;
+      const score = (headingToward ? dist : dist + sim.floors) + loadPenalty;
       if (score < bestDist) { bestDist = score; bestEl = el; }
     }
 

@@ -8,6 +8,7 @@ const ANIMAL_TYPES = [
 ];
 
 const MAX_WAITING = 30;
+const MAX_PER_FLOOR = 3;
 
 // Simulation constants
 export const SIM_CONSTANTS = {
@@ -47,7 +48,20 @@ export function spawnAnimal(sim) {
   const waiting = sim.animals.filter(a => a.state === 'waiting').length;
   if (waiting >= MAX_WAITING) return null;
 
-  const origin = Math.floor(Math.random() * sim.floors);
+  // Pick a floor that isn't already full
+  let origin;
+  let attempts = 0;
+  do {
+    origin = Math.floor(Math.random() * sim.floors);
+    attempts++;
+  } while (
+    attempts < 20 &&
+    sim.animals.filter(a => a.state === 'waiting' && a.origin === origin).length >= MAX_PER_FLOOR
+  );
+  if (sim.animals.filter(a => a.state === 'waiting' && a.origin === origin).length >= MAX_PER_FLOOR) {
+    return null; // all floors full
+  }
+
   let dest = Math.floor(Math.random() * sim.floors);
   while (dest === origin) dest = Math.floor(Math.random() * sim.floors);
 
@@ -201,8 +215,26 @@ function tickElevator(sim, el, dt) {
       break;
     }
 
-    case 'doors-closing':
+    case 'doors-closing': {
       el.stateTimer -= dt;
+
+      // Abort close if new passengers are waiting on this floor (door sensor)
+      const closingFloor = Math.round(el.floor);
+      const newWaiting = sim.animals.some(a =>
+        a.state === 'waiting' &&
+        a.origin === closingFloor &&
+        el.passengers.length < sim.capacity &&
+        (el.direction === 0 || a.direction === el.direction)
+      );
+      const needsUnload = el.passengers.some(a => a.dest === closingFloor);
+      if (newWaiting || needsUnload) {
+        // Reopen: reverse the remaining close progress into an opening
+        const elapsed = SIM_CONSTANTS.doorDuration - el.stateTimer;
+        el.state = 'doors-opening';
+        el.stateTimer = elapsed; // time left to finish opening = how far we closed
+        break;
+      }
+
       if (el.stateTimer <= 0) {
         if (el.targets.length > 0) {
           el.targetFloor = el.targets[0];
@@ -214,5 +246,6 @@ function tickElevator(sim, el, dt) {
         }
       }
       break;
+    }
   }
 }

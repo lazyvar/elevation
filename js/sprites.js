@@ -59,7 +59,11 @@ export async function loadSprites() {
       promises.push(p);
     }
   }
-  await Promise.all(promises);
+  const results = await Promise.allSettled(promises);
+  const failed = results.filter(r => r.status === 'rejected');
+  if (failed.length > 0) {
+    console.warn(`${failed.length} sprite(s) failed to load`);
+  }
 }
 
 /**
