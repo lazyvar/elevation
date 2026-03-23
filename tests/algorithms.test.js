@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { scanAlgorithm } from '../js/algorithms/scan.js';
 import { nearestCarAlgorithm } from '../js/algorithms/nearest.js';
+import { roundRobinAlgorithm, resetRoundRobin } from '../js/algorithms/roundrobin.js';
 
 function makeSim(overrides = {}) {
   return {
@@ -57,5 +58,24 @@ describe('Nearest Car algorithm', () => {
     nearestCarAlgorithm(sim);
     assert.ok(sim.elevators[0].targets.includes(2), 'Elevator 0 (floor 1) should get the request');
     assert.ok(!sim.elevators[1].targets.includes(2), 'Elevator 1 (floor 8) should not');
+  });
+});
+
+describe('Round Robin algorithm', () => {
+  it('distributes animals across elevators evenly', () => {
+    resetRoundRobin();
+    const sim = makeSim({
+      elevators: [
+        { id: 0, floor: 0, direction: 0, passengers: [], state: 'idle', targets: [], targetFloor: null, stateTimer: 0 },
+        { id: 1, floor: 0, direction: 0, passengers: [], state: 'idle', targets: [], targetFloor: null, stateTimer: 0 },
+      ],
+    });
+    sim.animals.push(
+      { id: 0, origin: 2, dest: 5, state: 'waiting', direction: 1 },
+      { id: 1, origin: 3, dest: 1, state: 'waiting', direction: -1 },
+    );
+    roundRobinAlgorithm(sim);
+    assert.ok(sim.elevators[0].targets.length > 0);
+    assert.ok(sim.elevators[1].targets.length > 0);
   });
 });
