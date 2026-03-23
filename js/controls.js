@@ -6,12 +6,14 @@ export function setupControls(callbacks) {
     btnStep: document.getElementById('btn-step'),
     btnReset: document.getElementById('btn-reset'),
     btnSpawn: document.getElementById('btn-spawn'),
+    btnClear: document.getElementById('btn-clear'),
     speed: document.getElementById('speed'),
     speedVal: document.getElementById('speed-val'),
     floors: document.getElementById('floors'),
     elevators: document.getElementById('elevators'),
     capacity: document.getElementById('capacity'),
     spawnRate: document.getElementById('spawn-rate'),
+    spawnRateVal: document.getElementById('spawn-rate-val'),
     algorithm: document.getElementById('algorithm'),
   };
 
@@ -49,7 +51,9 @@ export function setupControls(callbacks) {
 
   els.spawnRate.addEventListener('input', () => {
     const val = parseInt(els.spawnRate.value);
-    const threshold = 0.9 - (val / 100) * 0.6;
+    els.spawnRateVal.textContent = val;
+    // val 0 = no spawning (threshold above max noise), val 100 = max spawning
+    const threshold = val === 0 ? Infinity : 0.9 - (val / 100) * 0.6;
     callbacks.onSpawnRateChange(threshold);
   });
 
@@ -59,6 +63,10 @@ export function setupControls(callbacks) {
 
   els.btnSpawn.addEventListener('click', () => {
     callbacks.onManualSpawn();
+  });
+
+  els.btnClear.addEventListener('click', () => {
+    callbacks.onClearAnimals();
   });
 
   function getConfig() {
@@ -74,6 +82,6 @@ export function setupControls(callbacks) {
     config: getConfig(),
     paused,
     speed: parseFloat(els.speed.value),
-    spawnThreshold: 0.9 - (parseInt(els.spawnRate.value) / 100) * 0.6,
+    spawnThreshold: parseInt(els.spawnRate.value) === 0 ? Infinity : 0.9 - (parseInt(els.spawnRate.value) / 100) * 0.6,
   };
 }

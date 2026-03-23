@@ -40,7 +40,21 @@ export function getLayout(sim) {
   return { buildingWidth, buildingHeight, FLOOR_HEIGHT, SHAFT_WIDTH, SHAFT_GAP, FLOOR_LABEL_WIDTH, WAITING_AREA_WIDTH };
 }
 
-export function render(ctx, sim, canvasW, canvasH, scrollY) {
+export function canvasYToFloor(y, sim, canvasH, scrollY) {
+  const layout = getLayout(sim);
+  const bottomOffset = Math.max(0, canvasH - layout.buildingHeight);
+  const buildingY = y - bottomOffset + scrollY;
+  const floor = Math.floor((layout.buildingHeight - buildingY) / layout.FLOOR_HEIGHT);
+  if (floor < 0 || floor >= sim.floors) return -1;
+  return floor;
+}
+
+export function isWaitingArea(x, sim) {
+  const layout = getLayout(sim);
+  return x >= layout.FLOOR_LABEL_WIDTH && x < layout.FLOOR_LABEL_WIDTH + layout.WAITING_AREA_WIDTH;
+}
+
+export function render(ctx, sim, canvasW, canvasH, scrollY, hoveredFloor) {
   const layout = getLayout(sim);
 
   ctx.save();
@@ -53,6 +67,13 @@ export function render(ctx, sim, canvasW, canvasH, scrollY) {
   drawBuilding(ctx, sim, layout, canvasW);
   drawElevators(ctx, sim, layout);
   drawAnimals(ctx, sim, layout);
+
+  // Hover highlight on waiting area
+  if (hoveredFloor >= 0 && hoveredFloor < sim.floors) {
+    const y = floorY(hoveredFloor, layout);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+    ctx.fillRect(layout.FLOOR_LABEL_WIDTH, y, layout.WAITING_AREA_WIDTH, layout.FLOOR_HEIGHT - 6);
+  }
 
   ctx.restore();
 }
@@ -178,8 +199,8 @@ function drawAnimals(ctx, sim, layout) {
   // Group waiting/exiting animals by floor
   const waitingByFloor = {};
   for (const animal of sim.animals) {
-    if (animal.state === 'waiting' || animal.state === 'exiting') {
-      const f = animal.state === 'waiting' ? animal.origin : animal.dest;
+    if (animal.state === 'waiting') {
+      const f = animal.origin;
       if (!waitingByFloor[f]) waitingByFloor[f] = [];
       waitingByFloor[f].push(animal);
     }

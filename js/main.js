@@ -5,7 +5,7 @@ import { createSim, spawnAnimal, tickSim } from './sim.js';
 import { perlin1d, seedPerlin } from './perlin.js';
 import { algorithms } from './algorithms/index.js';
 import { resetRoundRobin } from './algorithms/roundrobin.js';
-import { render, getLayout } from './renderer.js';
+import { render, getLayout, canvasYToFloor, isWaitingArea } from './renderer.js';
 import { setupControls } from './controls.js';
 import { logAnimalEvent, logEvent, clearLog } from './eventlog.js';
 
@@ -33,6 +33,7 @@ let spawnThreshold = 0.6;
 let scrollY = 0;
 let lastTime = 0;
 let spawnCooldown = 0;
+let hoveredFloor = -1;
 
 // Track previous states for event detection
 let prevAnimalStates = new Map();
@@ -54,6 +55,13 @@ function resetSim(config) {
   prevAnimalStates.clear();
   prevElevatorStates.clear();
   clearLog();
+
+  // Pre-spawn a batch of animals
+  const initialCount = Math.min(sim.floors * 2, 20);
+  for (let i = 0; i < initialCount; i++) {
+    spawnAnimal(sim);
+  }
+  detectEvents();
 }
 
 function detectEvents() {
@@ -71,7 +79,7 @@ function detectEvents() {
         logAnimalEvent(animal, `boarding elevator ${animal.elevator}`);
       } else if (state === 'riding') {
         logAnimalEvent(animal, `riding to floor ${animal.dest + 1}`);
-      } else if (state === 'exiting') {
+      } else if (state === 'done') {
         logAnimalEvent(animal, `arrived at floor ${animal.dest + 1}`);
       }
     }
@@ -133,7 +141,7 @@ function gameLoop(now) {
 
     // Render always (even when paused)
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    render(ctx, sim, canvas.clientWidth, canvas.clientHeight, scrollY);
+    render(ctx, sim, canvas.clientWidth, canvas.clientHeight, scrollY, hoveredFloor);
   }
 
   requestAnimationFrame(gameLoop);
@@ -147,6 +155,32 @@ canvas.addEventListener('wheel', (e) => {
   const maxScroll = Math.max(0, layout.buildingHeight - canvas.clientHeight);
   scrollY = Math.max(0, Math.min(maxScroll, scrollY + e.deltaY));
 }, { passive: false });
+
+// Floor hover and click-to-spawn
+canvas.addEventListener('mousemove', (e) => {
+  if (!sim) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  if (isWaitingArea(x, sim)) {
+    hoveredFloor = canvasYToFloor(y, sim, canvas.clientHeight, scrollY);
+    canvas.style.cursor = hoveredFloor >= 0 ? 'pointer' : '';
+  } else {
+    hoveredFloor = -1;
+    canvas.style.cursor = '';
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoveredFloor = -1;
+  canvas.style.cursor = '';
+});
+
+canvas.addEventListener('click', (e) => {
+  if (!sim || hoveredFloor < 0) return;
+  const animal = spawnAnimal(sim, hoveredFloor);
+  if (animal) detectEvents();
+});
 
 // Draggable event log resize handle
 {
@@ -212,8 +246,16 @@ async function init() {
     },
     onManualSpawn: () => {
       if (sim) {
-        const animal = spawnAnimal(sim);
-        if (animal) logAnimalEvent(animal, `spawned on floor ${animal.origin + 1}, wants floor ${animal.dest + 1}`);
+        spawnAnimal(sim);
+        detectEvents();
+      }
+    },
+    onClearAnimals: () => {
+      if (sim) {
+        sim.animals = sim.animals.filter(a => a.state !== 'waiting');
+        for (const el of sim.elevators) {
+          el.targets = [];
+        }
       }
     },
   });

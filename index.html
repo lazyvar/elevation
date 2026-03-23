@@ -19,12 +19,12 @@
       <button id="btn-reset" title="Reset">Reset</button>
     </div>
     <div class="control-group control-group--center">
-      <label>Floors <input type="number" id="floors" min="2" max="50" value="10"></label>
-      <label>Elevators <input type="number" id="elevators" min="1" max="8" value="4"></label>
-      <label>Capacity <input type="number" id="capacity" min="1" max="20" value="6"></label>
+      <label>Floors <input type="number" id="floors" min="2" max="50" value="12"></label>
+      <label>Elevators <input type="number" id="elevators" min="1" max="10" value="10"></label>
+      <label>Capacity <input type="number" id="capacity" min="1" max="20" value="1"></label>
     </div>
     <div class="control-group control-group--right">
-      <label>Spawn Rate <input type="range" id="spawn-rate" min="0" max="100" value="50"></label>
+      <label>Spawn Rate <input type="range" id="spawn-rate" min="0" max="100" value="50"><span id="spawn-rate-val">50</span></label>
       <label>Algorithm
         <select id="algorithm">
           <option value="scan" selected>SCAN</option>
@@ -33,6 +33,7 @@
         </select>
       </label>
       <button id="btn-spawn">Spawn Animal</button>
+      <button id="btn-clear">Clear</button>
     </div>
   </header>
   <div id="main-area">

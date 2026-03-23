@@ -44,22 +44,26 @@ export function createSim({ floors, elevators, capacity }) {
   };
 }
 
-export function spawnAnimal(sim) {
+export function spawnAnimal(sim, forceOrigin) {
   const waiting = sim.animals.filter(a => a.state === 'waiting').length;
   if (waiting >= MAX_WAITING) return null;
 
-  // Pick a floor that isn't already full
   let origin;
-  let attempts = 0;
-  do {
-    origin = Math.floor(Math.random() * sim.floors);
-    attempts++;
-  } while (
-    attempts < 20 &&
-    sim.animals.filter(a => a.state === 'waiting' && a.origin === origin).length >= MAX_PER_FLOOR
-  );
-  if (sim.animals.filter(a => a.state === 'waiting' && a.origin === origin).length >= MAX_PER_FLOOR) {
-    return null; // all floors full
+  if (forceOrigin != null) {
+    origin = forceOrigin;
+  } else {
+    // Pick a floor that isn't already full
+    let attempts = 0;
+    do {
+      origin = Math.floor(Math.random() * sim.floors);
+      attempts++;
+    } while (
+      attempts < 20 &&
+      sim.animals.filter(a => a.state === 'waiting' && a.origin === origin).length >= MAX_PER_FLOOR
+    );
+    if (sim.animals.filter(a => a.state === 'waiting' && a.origin === origin).length >= MAX_PER_FLOOR) {
+      return null; // all floors full
+    }
   }
 
   let dest = Math.floor(Math.random() * sim.floors);
@@ -109,14 +113,6 @@ export function tickSim(sim, dt) {
       }
     }
 
-    // Exiting countdown — transitions to done using sim time (not wall time)
-    if (animal.state === 'exiting') {
-      animal.stateTimer -= dt;
-      if (animal.stateTimer <= 0) {
-        animal.state = 'done';
-      }
-    }
-
     // Sprite animation — tied to sim time via dt
     animal.animTimer += dt;
     if (animal.animTimer > 0.12) {
@@ -136,8 +132,17 @@ function tickElevator(sim, el, dt) {
         el.targetFloor = el.targets[0];
         if (el.targetFloor === Math.round(el.floor)) {
           el.targets.shift();
-          el.state = 'doors-opening';
-          el.stateTimer = SIM_CONSTANTS.doorDuration;
+          // Only open doors if there's actually something to do on this floor
+          const hasWork = el.passengers.some(a => a.dest === el.targetFloor) ||
+            sim.animals.some(a =>
+              a.state === 'waiting' &&
+              a.origin === el.targetFloor &&
+              el.passengers.length < sim.capacity
+            );
+          if (hasWork) {
+            el.state = 'doors-opening';
+            el.stateTimer = SIM_CONSTANTS.doorDuration;
+          }
         } else {
           el.direction = el.targetFloor > el.floor ? 1 : -1;
           el.state = 'moving';
@@ -176,27 +181,27 @@ function tickElevator(sim, el, dt) {
       const exiting = el.passengers.filter(a => a.dest === currentFloor);
       if (exiting.length > 0 && el.stateTimer <= 0) {
         const animal = exiting[0];
-        animal.state = 'exiting';
-        animal.stateTimer = SIM_CONSTANTS.exitDuration;
+        animal.state = 'done';
         animal.elevator = null;
-        animal.floor = currentFloor;
         el.passengers = el.passengers.filter(a => a.id !== animal.id);
         el.stateTimer = SIM_CONSTANTS.unloadingTime;
         break;
       }
 
-      // Board waiting animals — direction-aware
+      // Board waiting animals — direction-aware (but accept any direction when empty)
       const waiting = sim.animals.filter(a =>
         a.state === 'waiting' &&
         a.origin === currentFloor &&
         el.passengers.length < sim.capacity &&
-        (el.direction === 0 || a.direction === el.direction)
+        (el.direction === 0 || el.passengers.length === 0 || a.direction === el.direction)
       );
       if (waiting.length > 0 && el.stateTimer <= 0) {
         const animal = waiting[0];
         animal.state = 'boarding';
         animal.stateTimer = SIM_CONSTANTS.boardingTime;
         animal.elevator = el.id;
+        // Adopt animal's direction when elevator has none
+        if (el.direction === 0) el.direction = animal.direction;
         if (!el.targets.includes(animal.dest)) {
           el.targets.push(animal.dest);
           el.targets.sort((a, b) => el.direction >= 0 ? a - b : b - a);
@@ -224,7 +229,7 @@ function tickElevator(sim, el, dt) {
         a.state === 'waiting' &&
         a.origin === closingFloor &&
         el.passengers.length < sim.capacity &&
-        (el.direction === 0 || a.direction === el.direction)
+        (el.direction === 0 || el.passengers.length === 0 || a.direction === el.direction)
       );
       const needsUnload = el.passengers.some(a => a.dest === closingFloor);
       if (newWaiting || needsUnload) {
