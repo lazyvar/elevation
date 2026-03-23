@@ -1,5 +1,5 @@
 # Extracted source assets (not needed for deployment)
-cats/
-dogs/
-foxes/
+/cats/
+/dogs/
+/foxes/
 *.rar

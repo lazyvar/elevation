@@ -1,6 +1,6 @@
 # Elevation
 
-<img src="assets/sprites/cats/black-walk.png" alt="pixel art cat" width="128" style="image-rendering: pixelated;">
+<img src="assets/sprites/cats/black-single.png" alt="pixel art cat" width="64" style="image-rendering: pixelated;">
 
 A browser-based pixel-art elevator simulator that visualizes three scheduling algorithms side by side. Cats, dogs, and foxes ride elevators through a building while you tweak parameters in real time.
 
