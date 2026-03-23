@@ -11,7 +11,6 @@ const FLOOR_LABEL_WIDTH = 40;
 const WAITING_AREA_WIDTH = 200;
 const SPRITE_SCALE = 1;
 const ANIMAL_SPACING = 50;
-const BOTTOM_PADDING = 20;
 
 // Elevator sprite images (loaded async)
 const elevatorImages = {};
@@ -37,7 +36,7 @@ const CAR_HEIGHT = 64;
 
 export function getLayout(sim) {
   const buildingWidth = FLOOR_LABEL_WIDTH + WAITING_AREA_WIDTH + sim.elevators.length * (SHAFT_WIDTH + SHAFT_GAP) + 20;
-  const buildingHeight = sim.floors * FLOOR_HEIGHT + BOTTOM_PADDING;
+  const buildingHeight = sim.floors * FLOOR_HEIGHT;
   return { buildingWidth, buildingHeight, FLOOR_HEIGHT, SHAFT_WIDTH, SHAFT_GAP, FLOOR_LABEL_WIDTH, WAITING_AREA_WIDTH };
 }
 
@@ -47,7 +46,7 @@ export function render(ctx, sim, canvasW, canvasH, scrollY) {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  // Anchor building to bottom of canvas: offset down when building is shorter than viewport
+  // Anchor building to bottom of canvas
   const bottomOffset = Math.max(0, canvasH - layout.buildingHeight);
   ctx.translate(0, bottomOffset - scrollY);
 
@@ -59,7 +58,7 @@ export function render(ctx, sim, canvasW, canvasH, scrollY) {
 }
 
 function floorY(floor, layout) {
-  return (layout.buildingHeight - BOTTOM_PADDING) - (floor + 1) * layout.FLOOR_HEIGHT;
+  return layout.buildingHeight - (floor + 1) * layout.FLOOR_HEIGHT;
 }
 
 function drawBuilding(ctx, sim, layout, canvasW) {
@@ -149,22 +148,16 @@ function drawElevators(ctx, sim, layout) {
     }
     doorOpenness = Math.max(0, Math.min(1, doorOpenness));
 
-    if (doorOpenness > 0 && doorImg.complete && doorImg.naturalWidth > 0) {
-      // Animate door using 3 frames from lift-door.png (64x64 each)
+    if (closedImg.complete && closedImg.naturalWidth > 0) {
+      // Animate using 3 frames from lift-closed.png (32x64 each)
       // frame 0 = closed, frame 1 = half open, frame 2 = fully open
       let frameIdx;
       if (doorOpenness < 0.33) frameIdx = 0;
       else if (doorOpenness < 0.66) frameIdx = 1;
       else frameIdx = 2;
-      ctx.drawImage(doorImg, frameIdx * 64, 0, 64, 64, carX, carY, CAR_WIDTH, CAR_HEIGHT);
-    } else if (doorOpenness >= 1 && openImg.complete && openImg.naturalWidth > 0) {
-      // Fully open fallback
-      ctx.drawImage(openImg, 64, 0, 64, 64, carX, carY, CAR_WIDTH, CAR_HEIGHT);
-    } else if (closedImg.complete && closedImg.naturalWidth > 0) {
-      // Closed elevator
-      ctx.drawImage(closedImg, 0, 0, 32, 64, carX, carY, CAR_WIDTH, CAR_HEIGHT);
+      ctx.drawImage(closedImg, frameIdx * 32, 0, 32, 64, carX, carY, CAR_WIDTH, CAR_HEIGHT);
     } else {
-      // Fallback rectangles
+      // Fallback rectangle
       ctx.fillStyle = '#333';
       ctx.fillRect(carX, carY, CAR_WIDTH, CAR_HEIGHT);
     }
