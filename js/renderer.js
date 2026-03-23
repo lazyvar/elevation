@@ -183,12 +183,39 @@ function drawElevators(ctx, sim, layout) {
       ctx.fillRect(carX, carY, CAR_WIDTH, CAR_HEIGHT);
     }
 
-    // Passenger count
+    // Passenger indicators — colored badges above elevator
     if (el.passengers.length > 0) {
-      ctx.fillStyle = '#111';
-      ctx.font = '11px Sora, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${el.passengers.length}`, carX + CAR_WIDTH / 2, carY - 4);
+      const badgeW = 18;
+      const badgeH = 16;
+      const gap = 3;
+      const totalW = el.passengers.length * (badgeW + gap) - gap;
+      const startX = carX + (CAR_WIDTH - totalW) / 2;
+
+      for (let p = 0; p < el.passengers.length; p++) {
+        const passenger = el.passengers[p];
+        const bx = startX + p * (badgeW + gap);
+        const by = carY - badgeH - 6;
+
+        // Color by animal type
+        let color = '#888';
+        if (passenger.type.startsWith('cat')) color = '#f59e0b';
+        else if (passenger.type.startsWith('dog')) color = '#60a5fa';
+        else if (passenger.type.startsWith('fox')) color = '#f87171';
+
+        // Badge background
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, badgeW, badgeH, 3);
+        ctx.fill();
+
+        // Destination floor number
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px Sora, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${passenger.dest + 1}`, bx + badgeW / 2, by + badgeH / 2);
+      }
+      ctx.textBaseline = 'alphabetic';
     }
   }
 }
