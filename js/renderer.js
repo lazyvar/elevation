@@ -71,7 +71,7 @@ export function render(ctx, sim, canvasW, canvasH, scrollY, hoveredFloor) {
   // Hover highlight on waiting area
   if (hoveredFloor >= 0 && hoveredFloor < sim.floors) {
     const y = floorY(hoveredFloor, layout);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.fillRect(layout.FLOOR_LABEL_WIDTH, y, layout.WAITING_AREA_WIDTH, layout.FLOOR_HEIGHT - 6);
   }
 
@@ -83,24 +83,25 @@ function floorY(floor, layout) {
 }
 
 function drawBuilding(ctx, sim, layout, canvasW) {
-  ctx.fillStyle = '#f2f2f2';
+  // Building interior
+  ctx.fillStyle = '#1e1e2e';
   ctx.fillRect(0, -canvasW, canvasW, layout.buildingHeight + canvasW + 40);
 
   for (let f = 0; f < sim.floors; f++) {
     const y = floorY(f, layout);
 
     // Floor slab
-    ctx.fillStyle = '#ccc';
+    ctx.fillStyle = '#3a3a5c';
     ctx.fillRect(layout.FLOOR_LABEL_WIDTH, y + layout.FLOOR_HEIGHT - 6, canvasW - layout.FLOOR_LABEL_WIDTH, 6);
 
     // Floor number
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = '#8888aa';
     ctx.font = '14px Sora, monospace';
     ctx.textAlign = 'right';
     ctx.fillText(`${f + 1}`, layout.FLOOR_LABEL_WIDTH - 8, y + layout.FLOOR_HEIGHT / 2 + 5);
 
     // Waiting area background
-    ctx.fillStyle = '#e8e8e8';
+    ctx.fillStyle = '#2a2a3e';
     ctx.fillRect(layout.FLOOR_LABEL_WIDTH, y, layout.WAITING_AREA_WIDTH, layout.FLOOR_HEIGHT - 6);
   }
 
@@ -114,7 +115,7 @@ function drawBuilding(ctx, sim, layout, canvasW) {
     const sx = shaftStartX + i * (layout.SHAFT_WIDTH + layout.SHAFT_GAP);
 
     // Fill shaft background
-    ctx.fillStyle = '#e0e0e0';
+    ctx.fillStyle = '#252540';
     ctx.fillRect(sx, 0, layout.SHAFT_WIDTH, layout.buildingHeight);
 
     // Tile the shaft walls if loaded
@@ -282,9 +283,9 @@ function drawAnimals(ctx, sim, layout) {
       const arrow = animal.direction > 0 ? '\u25B2' : '\u25BC';
       ctx.font = '8px Sora, monospace';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#555';
+      ctx.fillStyle = '#bac2de';
       ctx.fillText(animal.name, ax + frame.fw * SPRITE_SCALE / 2, ay - 10);
-      ctx.fillStyle = animal.direction > 0 ? '#16a34a' : '#dc2626';
+      ctx.fillStyle = animal.direction > 0 ? '#89b4fa' : '#fab387';
       ctx.font = '10px Sora, monospace';
       ctx.fillText(arrow, ax + frame.fw * SPRITE_SCALE / 2, ay - 2);
     });
