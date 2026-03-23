@@ -37,7 +37,7 @@ export function scanAlgorithm(sim) {
 
     // How many elevator-loads do we need for this floor?
     // Each elevator can take up to sim.capacity passengers
-    const alreadyTargeting = sim.elevators.filter(el => el.targets.includes(floor));
+    const alreadyTargeting = sim.elevators.filter(el => el.targets.includes(floor) && el.passengers.length < sim.capacity);
     const capacityAssigned = alreadyTargeting.reduce((sum, el) => sum + (sim.capacity - el.passengers.length), 0);
 
     if (capacityAssigned >= animals.length) continue; // enough elevators assigned
@@ -45,7 +45,7 @@ export function scanAlgorithm(sim) {
     // Need more elevators for this floor
     let remaining = animals.length - capacityAssigned;
     const available = sim.elevators
-      .filter(el => !el.targets.includes(floor))
+      .filter(el => !el.targets.includes(floor) && el.passengers.length < sim.capacity)
       .map(el => {
         const dist = Math.abs(el.floor - floor);
         const headingToward = el.direction === 0 ||

@@ -134,11 +134,10 @@ function tickElevator(sim, el, dt) {
           el.targets.shift();
           // Only open doors if there's actually something to do on this floor
           const hasWork = el.passengers.some(a => a.dest === el.targetFloor) ||
-            sim.animals.some(a =>
+            (el.passengers.length < sim.capacity && sim.animals.some(a =>
               a.state === 'waiting' &&
-              a.origin === el.targetFloor &&
-              el.passengers.length < sim.capacity
-            );
+              a.origin === el.targetFloor
+            ));
           if (hasWork) {
             el.state = 'doors-opening';
             el.stateTimer = SIM_CONSTANTS.doorDuration;

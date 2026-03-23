@@ -10,7 +10,7 @@ export function nearestCarAlgorithm(sim) {
   }
 
   for (const animal of waiting) {
-    if (sim.elevators.some(el => el.targets.includes(animal.origin))) continue;
+    if (sim.elevators.some(el => el.targets.includes(animal.origin) && el.passengers.length < sim.capacity)) continue;
 
     let bestEl = null;
     let bestDist = Infinity;

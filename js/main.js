@@ -256,6 +256,7 @@ async function init() {
         for (const el of sim.elevators) {
           el.targets = [];
         }
+        logEvent('system', '~', 'Cleared waiting queue');
       }
     },
   });
